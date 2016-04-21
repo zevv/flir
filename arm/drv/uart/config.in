@@ -1,0 +1,38 @@
+
+menuconfig DRV_UART
+	bool "UART drivers"
+
+if DRV_UART
+
+config DRV_UART_STM32
+	bool "STM32 UART driver"
+	default y
+	depends on DRV_UART && ARCH_STM32
+
+config DRV_UART_LPC
+	bool "LPC UART driver"
+	default y
+	depends on DRV_UART && ARCH_LPC
+
+config DRV_UART_LINUX
+	bool "Linux UART driver"
+	default y
+	depends on DRV_UART && ARCH_LINUX
+
+config DRV_UART_WIN32
+	bool "WIN32 UART driver"
+	default y
+	depends on DRV_UART && ARCH_WIN32
+
+config DRV_UART_STDIO
+	bool "STDIO UART driver"
+	default n
+	depends on DRV_UART && (ARCH_WIN32 || ARCH_LINUX)
+
+config DRV_UART_AVR
+	bool "Atmel AVR UART driver"
+	default y
+	depends on DRV_UART && ARCH_AVR
+
+
+endif

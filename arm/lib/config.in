@@ -1,0 +1,30 @@
+menu "Libraries"
+
+config LIB_FATFS
+	bool "FATfs"
+
+config LIB_FATFS_WRITE
+	bool "FATfs write functionalty"
+	depends on LIB_FATFS
+
+config LIB_FATFS_MFKFS
+	bool "FATfs mkfs"
+	depends on LIB_FATFS_WRITE
+
+source "lib/canopen/config.in"
+
+config LIB_HTTPD
+	bool "HTTP server"
+	depends on (ARCH_LINUX || ARCH_WIN32)
+
+config LIB_UIP
+	bool "uIP IP stack"
+
+config LIB_CONFIG
+	bool "Configuration store"
+	select DRV_NV
+
+config LIB_BATTDB
+	bool "Battery database"
+
+endmenu

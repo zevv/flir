@@ -1,0 +1,94 @@
+
+
+The following NMEA 2000 PGN commands are supported by the Remote Switch:
+
+- PGN 060928: ISO Address claim
+- PGN 127506: DC Detailed Status
+- PGN 127508: Battery Status
+
+== Periodic Data Transmitted PGNs
+
+=== PGN 127506: DC Detailed Status
+
+[width="70%",cols="1s,1e,1m,4"]
+|===
+
+  | Field 1 | SID             | uint8 |
+  
+    The sequence identifier field is used to tie related PGNs together. For
+    example, the Remote Switch will transmit identical SIDs for 127506 (DC
+    Detailed Status) and 127508 (Battery Status) to indicate that the readings
+    are linked together (i.e., the data from each PGN was taken at the same
+    time although they are reported at slightly different times).
+  
+  | Field 2 | DC Instance     | uint8 |
+  
+    This field indicates the particular DC source or battery for which this data
+    applies. The remote switch will always have an instance of 0
+  
+  | Field 3 | DC Type         | uint8 |
+  
+    This field indicates the type of DC source being monitored.  0=Battery,
+    1=Alternator, 2=Convertor, 3=Solar Cell, 4=Wind Generator. The remote switch
+    will always report a DC type of 0 (Battery)
+  
+  | Field 4 | State of Charge | uint8 |
+  
+    This field indicates the state of charge of a battery in units of 1%.
+  
+  | Field 5 | State of Health | uint8 |
+  
+    This field always contains a value of 100 (no State of Health calculation).
+  
+  | Field 6 | Time Remaining  | uint16 |
+  
+    This field indicates the time remaining to the discharge floor at the current
+    rate of discharge in units of 1 minute.
+  
+  | Field 7 | Ripple Voltage  | uint16 |
+    
+    This field always contains a value of 0
+
+|===
+
+ 
+
+=== PGN 127508: Battery Status
+
+ 
+[width="70%",cols="1s,1e,1m,4"]
+|===
+
+
+  | Field 1 | Battery Instance  | uint8 |
+  
+    This field indicates the particular DC source or battery for which this
+    data applies. The remote switch will always have an instance of 0
+
+  | Field 2 | Battery Voltage | uint16 |
+  
+    This field indicates the voltage of the battery in units of 10 mV.
+  
+  | Field 3 | Battery Current |  uint16 |
+  
+    This field indicates the current flowing through the battery in units of
+    0.1A. Positive values denote that charging current, negative values denote
+    discharge current.
+  
+  | Field 4 | Battery Case Temperature  | uint16 |
+  
+    This field indicates the temperature of the batterys case in units of
+    0.01K.
+
+  | Field 5 | SID  | uint8 |
+  
+    The sequence identifier field is used to tie related PGNs together. For
+    example, the Remote Switch will transmit identical SIDs for 127506 (DC
+    Detailed Status) and 127508 (Battery Status) to indicate that the readings
+    are linked together (i.e., the data from each PGN was taken at the same
+    time although they are reported at slightly different times).
+
+|===
+
+ 
+

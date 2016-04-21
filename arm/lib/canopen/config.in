@@ -1,0 +1,16 @@
+
+
+config LIB_CANOPEN
+	bool "CANopen"
+
+config LIB_CANOPEN_MASTER
+	bool "CANopen master"
+	depends on LIB_CANOPEN
+
+config LIB_CANOPEN_STRERROR
+	bool "CANopen verbose error strings"
+	depends on LIB_CANOPEN
+
+config LIB_CANOPEN_ANALYZER
+	bool "CANopen analyzer"
+	depends on LIB_CANOPEN

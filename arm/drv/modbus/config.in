@@ -1,0 +1,12 @@
+
+menuconfig DRV_MODBUS
+	bool "Modbus drivers"
+
+if DRV_MODBUS
+
+config DRV_MODBUS_TCP
+	bool "Modbus TCP driver"
+	depends on DRV_MODBUS 
+
+
+endif

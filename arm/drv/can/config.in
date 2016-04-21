@@ -1,0 +1,31 @@
+
+menuconfig DRV_CAN
+	bool "CAN drivers"
+
+if DRV_CAN
+
+config DRV_CAN_STM32
+	bool "STM32 CAN driver"
+	default y
+	depends on DRV_CAN && ARCH_STM32
+
+config DRV_CAN_LINUX
+	bool "Linux CAN driver"
+	default y
+	depends on DRV_CAN && ARCH_LINUX
+
+config DRV_CAN_IXXAT
+	bool "Ixxat VCI CAN driver"
+	default y
+	depends on DRV_CAN && ARCH_WIN32
+
+config DRV_CAN_SOCKETCAND
+	bool "TCP socketcand interface"
+	depends on DRV_CAN && (ARCH_WIN32 || ARCH_LINUX)
+
+config DRV_CAN_DUMMY
+	bool "Dummy CAN driver"
+	default y
+	depends on DRV_CAN && ARCH_WIN32
+
+endif

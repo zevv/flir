@@ -1,0 +1,32 @@
+
+menuconfig DRV_GPIO
+	bool "GPIO drivers"
+
+if DRV_GPIO
+
+config DRV_GPIO_STM32
+	bool "STM32 GPIO driver"
+	default y
+	depends on DRV_GPIO && ARCH_STM32
+
+config DRV_GPIO_LPC
+	bool "LPC GPIO driver"
+	default y
+	depends on DRV_GPIO && ARCH_LPC
+
+config DRV_GPIO_DUMMY
+	bool "Dummy GPIO driver"
+	default n
+	depends on DRV_GPIO
+
+config DRV_GPIO_AVR
+	bool "Atmel AVR GPIO driver"
+	default y
+	depends on DRV_GPIO && ARCH_AVR
+
+config DRV_GPIO_SPI
+	bool "SPI connected GPIO driver"
+	default n
+	depends on DRV_GPIO && DRV_SPI
+
+endif

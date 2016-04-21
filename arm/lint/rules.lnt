@@ -1,0 +1,82 @@
+
+-i .
+-i lint
+co-gcc.lnt 
+
+/*
+ * Output
+ */
+
+-width(999)
+-"format=%(%f:%l:%c %) %m (%n)"
+
+/*
+ * Non-misra, just flexelint complaints
+ */
+
+-e451  // repeated inclusion of headers, not a misra rule
+-e665  // Unparenthesized parameter X in macro 'XXX' is passed an expression
+-e537  // repeated includes 
+-e522  // function 'XXX', lacks side-effects
+-e620  // suspicious constant
+-e766  // header file not used
+-e750  // local macro 'XXX' not referenced
+-e726  // extraneous comma ignored 
+-e793  // too long names
+-e835  // zero given as left arg to <<
+-e845  // right arg to | is certain to be 0
+
+
+/* 
+ * MISRA exceptions 
+ */
+
+-e818  // parameter could be declared as const. This is hard to enforce because we 
+       // use a lot of function in a driver model where default parameters are passed
+
+-e715  // symbol 'XXX" not referenced. This is hard to enforce because we use a
+       // lot of functions in a driver model where default parameters are passed
+
+-e970  // use of _Bool outside of a typedef. Required because of canopen library
+
+-e9079 // convert void pointer to struct. Also used for the driver model
+
+-e9018 // We use unions for the event system
+
+-emacro(9034, assert)
+
+
+/* 
+ * Stuff I do not understand or stuff we need to fix 
+ */
+
+-e826  // suspicious pointer-to-pointer conversion (area too small)
+-e785  // too few initializers in struct
+-e759  // declaration could be moved from header to module
+-e765  // external could be made static
+-e714  // unreferenced function
+-e954  // Pointer variable 'XX' (line XX) could be declared as pointing to const
+
+
+/*
+ * Workarounds for toolchain. For some reason I'm not able to mute these
+ * with a -elib(9058)
+ */
+
+-estring(9045, "struct __locale_struct")
+-estring(9045, "struct drand48_data")
+-estring(9045, "struct random_data")
+-estring(9045, "struct timeval")
+-estring(9023, EVQ*, CMD*)
+-estring(9024, EVQ*, CMD*)
++d__builtin_offsetof(,)=8u
+
+-esym(18, lockf)
+-esym(522, printd)
+
+
+/*
+ * TODO
+ */
+
+-e9045

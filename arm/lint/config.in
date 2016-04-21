@@ -1,0 +1,14 @@
+
+
+menu "Lint options"
+
+config LINT_LEVEL
+	int "Lint warning level"
+	default 3
+
+config LINT_MISRA
+        bool "Lint with MISRA rules"
+	default y
+
+endmenu
+

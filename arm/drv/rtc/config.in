@@ -1,0 +1,12 @@
+
+menuconfig DRV_RTC
+	bool "RTC drivers"
+
+if DRV_RTC
+
+config DRV_RTC_LINUX
+	bool "Linux RTC driver"
+	default y
+	depends on DRV_RTC && ARCH_LINUX
+
+endif

@@ -1,0 +1,68 @@
+
+config HAVE_DOT_CONFIG
+	bool
+	default y
+	select DRV_UART
+
+config ARCH_STM32
+	bool
+
+config ARCH_LINUX
+	bool
+
+config ARCH_LPC
+	bool
+
+config ARCH_AVR
+	bool
+
+config ARCH_WIN32
+	bool
+
+########################################################################
+
+config NAME
+	string "Product name"
+	default "app"
+
+source "plat/config.in"
+source "bios/config.in"
+source "app/config.in"
+source "lib/config.in"
+source "drv/config.in"
+source "lint/config.in"
+
+
+menu "Build options"
+
+config BUILD_VERBOSE
+	bool "Build verbose"
+
+config BUILD_OPTIMIZATION
+	string "Optimization level"
+	default "-Os"
+
+config BUILD_CCACHE
+	bool "Use ccache to speed up compilation"
+	default y
+
+config BUILD_SANITIZE
+	bool "Enable gcc address sanitizer"
+
+config BUILD_COVERAGE
+	bool "Enable gcov/lcov coverage testing"
+
+config BUILD_FLTO
+	bool "Compile and link with link time optimalization (-flto)"
+
+config BUILD_GC_SECTIONS
+	bool "Build using gc-sections"
+
+
+endmenu
+
+config ENABLE_TESTS
+	bool "Enable test code"
+
+########################################################################
+

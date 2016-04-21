@@ -1,0 +1,17 @@
+
+menuconfig DRV_EEPROM
+	bool "EEPROM drivers"
+
+if DRV_EEPROM
+
+config DRV_EEPROM_AT25
+	bool "AT25 SPI EEPROM driver"
+	default y
+	depends on DRV_EEPROM && ARCH_STM32 && DRV_SPI
+
+config DRV_EEPROM_STDIO
+	bool "STDIO EEPROM driver"
+	default n
+	depends on DRV_EEPROM && (ARCH_LINUX || ARCH_WIN32)
+
+endif

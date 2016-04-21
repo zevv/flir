@@ -1,0 +1,6 @@
+
+config DRV_UART_BITBANG
+	bool "Bitbanging UART driver"
+	default y
+	depends on DRV_UART && PLAT_BMS_AVR
+

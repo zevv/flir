@@ -1,0 +1,22 @@
+
+menuconfig DRV_ADC
+	bool "ADC drivers"
+
+if DRV_ADC
+
+config DRV_ADC_STM32
+	bool "STM32 ADC driver"
+	default y
+	depends on DRV_ADC && ARCH_STM32
+
+config DRV_ADC_DUMMY
+	bool "Dummy ADC driver"
+	default y
+	depends on DRV_ADC
+
+config DRV_ADC_AVR
+	bool "Atmel AVR ADC driver"
+	default y
+	depends on DRV_ADC && ARCH_AVR
+
+endif

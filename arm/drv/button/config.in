@@ -1,0 +1,18 @@
+
+menuconfig DRV_BUTTON
+	bool "button drivers"
+
+if DRV_BUTTON
+
+config DRV_BUTTON_LINUX
+	bool "Linux button driver"
+	default y
+	depends on DRV_BUTTON && ARCH_LINUX
+
+config DRV_BUTTON_GPIO
+	bool "GPIO button driver"
+	default y
+	depends on DRV_BUTTON
+
+
+endif

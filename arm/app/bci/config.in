@@ -1,0 +1,13 @@
+
+config APP_BCI
+	bool "BCI battery control interface"
+	select DRV_LED 
+	select DRV_ADC 
+	select DRV_UART 
+	select DRV_BUTTON 
+	select DRV_RELAY 
+	select LIB_CANOPEN
+	select LIB_CANOPEN_MASTER
+
+source app/bci/modules/config.in
+

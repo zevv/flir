@@ -1,0 +1,7 @@
+menu "BIOS settings"
+
+config BIOS_LOG_RB_SIZE
+	int "Log history ringbuffer size"
+	default 1024
+
+endmenu

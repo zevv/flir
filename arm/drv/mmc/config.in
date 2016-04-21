@@ -1,0 +1,17 @@
+
+menuconfig DRV_MMC
+	bool "MMC drivers"
+
+if DRV_MMC
+
+config DRV_MMC_SPI
+	bool "SPI MMC driver"
+	default y
+	depends on DRV_MMC && DRV_SPI
+
+config DRV_MMC_STDIO
+	bool "STDIO MMC emulation driver"
+	default n
+	depends on DRV_MMC && (ARCH_LINUX || ARCH_WIN32)
+
+endif

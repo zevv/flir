@@ -1,0 +1,17 @@
+
+menuconfig DRV_LED
+	bool "LED drivers"
+
+if DRV_LED
+
+config DRV_LED_GPIO
+	bool "GPIO LED driver"
+	default y
+	depends on DRV_LED && DRV_GPIO
+
+config DRV_LED_LINUX
+	bool "Linux LED driver"
+	default y
+	depends on DRV_LED && ARCH_LINUX
+
+endif

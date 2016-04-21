@@ -1,0 +1,16 @@
+
+menuconfig DRV_POWER
+	bool "Power supply drivers"
+
+if DRV_POWER
+
+config DRV_POWER_EA_9X000
+	bool "EA_9X00 power supply / load"
+	depends on DRV_POWER && DRV_UART
+
+config DRV_POWER_DUMMY
+	bool "Dummy power supply emulation driver"
+	default n
+	depends on DRV_POWER
+
+endif

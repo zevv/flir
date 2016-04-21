@@ -1,0 +1,110 @@
+
+-i lint
+co-gcc.lnt 
+lint/misra.lnt
+
+/*
+ * Output
+ */
+
+-width(999)
+-"format=%(%f:%l:%c %) %m (%n)"
+
+/*
+ * Include path
+ */
+
+-i bios
+-i app
+-i drv
+-i plat\bci
+-i lib\fatfs
+
+/* 
+ * Things we handle as library code
+ */
+
++libclass(angle)
+
++libm(drv\*\*.c)
++libm(plat\*\*.c)
++libm(lib\fatfs\*.c)
+
++libh(drv\arm\stm32\stm*)
++libh(drv\*\*.h)
++libh(sb_core_cm3.h)
++libh(sb_stm32f10x.h)
++libh(stm32\sb_stm32f10x.h)
++libh(stm32\stm32f10x_rcc.h)
++libh(lib\fatfs\ffconf.h)
++libh(lib\fatfs\ff.h)
+
+
+
+/*
+ * Strong types
+ */
+
+/*
+ * Non-misra, just flexelint complaints
+ */
+
+-e451  // repeated inclusion of headers, not a misra rule
+-e537  // repeated includes 
+-e726  // Extraneous comma ignored
+-e734  // loss of precision in assignemnt
+-e766  // header file not used
+-e835  // A zero has been given as right argument to operator
+-e747  // Significant prototype coercion
+-e785  // too few initializers in struct
+
+
+/*
+ * Misra exceptions
+ */
+
+-esym(715, argc, argv) // Symbol not referenced
+-esym(818, argv)       // Pointer parameter 'argv' (line 6) could be declared as pointing to const
+-e9003                 // could define X at block scope
+-e9026                 // function like macro, we use those at initialization time
+-e9018                 // We use unions for the event system
+
+
+-esym(528, evq_handler_*) // these constants are put in a special section ...
+-esym(528, cmd_handler_*) // .. for registering of event and command handlers
+-esym(526, __start_evq)   // defined by linker script
+-esym(526, __stop_evq)    // defined by linker script
+
+/*
+ * Workarounds for toolchain. For some reason I'm not able to mute these
+ * with a -elib(9058)
+ */
+
+-estring(9045, "struct __locale_struct")
+-estring(9023, EVQ*, CMD*)
+-estring(9024, EVQ*, CMD*)
++d__builtin_offsetof(,)=8u
+
+-esym(18, lockf)
+-esym(522, printd)
+
+
+/* 
+ *Temporary, should fix 
+ */
+
+-e522  // dead code
+-e714  // unreferenced function
+-e715  // unreferenced symbol
+-e756  // unreferenced typedef
+-e757  // unreferenced global declarator
+-e759  // declaration could be moved from header to module
+-e765  // external could be made static
+-e768  // unreferenced global struct member
+-e769  // unreferenced enum
+-e818  // parameter could be declared as const
+-e9045 // non-hidden definition
+-e9058 // tag unused outside of typedefs
+-e9079 // convert void pointer to struct
+
+

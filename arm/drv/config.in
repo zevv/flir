@@ -1,0 +1,18 @@
+menu "Drivers"
+
+source "drv/adc/config.in"
+source "drv/button/config.in"
+source "drv/can/config.in"
+source "drv/eeprom/config.in"
+source "drv/fan/config.in"
+source "drv/gpio/config.in"
+source "drv/led/config.in"
+source "drv/relay/config.in"
+source "drv/rtc/config.in"
+source "drv/spi/config.in"
+source "drv/uart/config.in"
+source "drv/mmc/config.in"
+
+endmenu
+
+

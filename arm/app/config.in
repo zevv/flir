@@ -1,0 +1,18 @@
+
+menu "Applications"
+
+config APP_BLINK
+	bool "Blink test app"
+	select DRV_LED 
+	select DRV_UART 
+
+source "app/bci/config.in"
+
+config APP_BMS
+	bool "BMS battery management system"
+	select DRV_UART 
+	select DRV_LED 
+	select LIB_CANOPEN
+
+endmenu
+

@@ -1,0 +1,12 @@
+
+menuconfig DRV_RELAY
+	bool "Relay drivers"
+
+if DRV_RELAY
+
+config DRV_RELAY_GPIO
+	bool "GPIO relay driver"
+	default y
+	depends on DRV_RELAY 
+
+endif

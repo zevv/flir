@@ -1,0 +1,35 @@
+
+choice
+	prompt "Platform"
+
+config PLAT_LINUX
+	bool "Linux emulation"
+	select ARCH_LINUX
+
+config PLAT_BCI
+	bool "BCI Battery control interface)"
+	select ARCH_STM32
+
+config PLAT_BMS
+	bool "BMS Battery management system, ARM STM32"
+	select ARCH_STM32
+
+config PLAT_BMS_AVR
+	bool "BMS Battery management system, Atmel AVR"
+	select ARCH_AVR
+
+config PLAT_LPC_P1343
+	bool "LPC_P1343 development board"
+	select ARCH_LPC
+
+config PLAT_VOLTCRAFT
+	bool "Voltcraft B06 charger"
+	select ARCH_AVR
+
+config PLAT_WIN32
+	bool "Windows emulation"
+	select ARCH_WIN32
+
+endchoice
+
+source "plat/bms-avr/config.in"

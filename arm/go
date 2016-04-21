@@ -1,0 +1,12 @@
+#!/bin/sh
+
+TTY=$1
+
+sudo slcan_attach -d /dev/ttyUSB2
+sudo slcan_attach -d /dev/ttyUSB3
+sudo slcan_attach -d /dev/ttyUSB4
+sudo killall slcand
+
+sudo slcan_attach -s5 /dev/$TTY
+sudo slcand -o -c -f -s5 $TTY
+sudo ifconfig slcan0 up

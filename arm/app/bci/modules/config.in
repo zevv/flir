@@ -1,0 +1,15 @@
+
+config APP_BCI_MOD_NMEA2000
+	bool "NMEA-2000 protocol module"
+	default y
+	depends on APP_BCI
+
+config APP_BCI_MOD_SMA
+	bool "SMA protocol module"
+	default y
+	depends on APP_BCI
+
+config APP_BCI_MOD_PHILIPPI
+	bool "Philippi protocol module"
+	default y
+	depends on APP_BCI

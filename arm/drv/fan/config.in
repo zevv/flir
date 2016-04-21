@@ -1,0 +1,17 @@
+
+menuconfig DRV_FAN
+	bool "Fan drivers"
+
+if DRV_FAN
+
+config DRV_FAN_STM32
+	bool "STM32 fan driver"
+	default y
+	depends on DRV_FAN && ARCH_STM32
+
+config DRV_FAN_LINUX
+	bool "Linux fan driver"
+	default y
+	depends on DRV_FAN && ARCH_LINUX
+
+endif

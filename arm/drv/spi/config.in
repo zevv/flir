@@ -1,0 +1,17 @@
+
+menuconfig DRV_SPI
+	bool "SPI drivers"
+
+if DRV_SPI
+
+config DRV_SPI_STM32
+	bool "STM32 SPI driver"
+	default y
+	depends on DRV_SPI && ARCH_STM32
+
+config DRV_SPI_AVR
+	bool "Atmel AVR SPI driver"
+	default y
+	depends on DRV_SPI && ARCH_AVR
+
+endif

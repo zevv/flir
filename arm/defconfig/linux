@@ -1,0 +1,74 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Linux Kernel Configuration
+#
+HAVE_DOT_CONFIG=y
+ARCH_LINUX=y
+NAME="app"
+PLAT_LINUX=y
+# PLAT_BCI is not set
+# PLAT_BMS is not set
+# PLAT_BMS_AVR is not set
+# PLAT_VOLTCRAFT is not set
+# PLAT_WIN32 is not set
+
+#
+# Applications
+#
+APP_BLINK=y
+# APP_BCI is not set
+# APP_BMS is not set
+
+#
+# Libraries
+#
+LIB_FATFS=y
+# LIB_FATFS_WRITE is not set
+# LIB_CANOPEN is not set
+# LIB_UIP is not set
+LIB_CONFIG=y
+
+#
+# Drivers
+#
+DRV_ADC=y
+DRV_ADC_LINUX=y
+DRV_BUTTON=y
+DRV_BUTTON_LINUX=y
+DRV_BUTTON_GPIO=y
+DRV_CAN=y
+DRV_CAN_LINUX=y
+DRV_EEPROM=y
+DRV_EEPROM_STDIO=y
+# DRV_FAN is not set
+DRV_GPIO=y
+DRV_GPIO_DUMMY=y
+DRV_GPIO_SPI=y
+DRV_LED=y
+DRV_LED_GPIO=y
+DRV_LED_LINUX=y
+DRV_RELAY=y
+DRV_RELAY_GPIO=y
+# DRV_RTC is not set
+DRV_SPI=y
+DRV_UART=y
+DRV_UART_LINUX=y
+# DRV_UART_STDIO is not set
+DRV_MMC=y
+# DRV_MMC_SPI is not set
+DRV_MMC_STDIO=y
+
+#
+# Lint options
+#
+LINT_LEVEL=3
+LINT_MISRA=y
+
+#
+# Build options
+#
+# BUILD_VERBOSE is not set
+BUILD_OPTIMIZATION="-Os"
+BUILD_CCACHE=y
+# BUILD_FLTO is not set
+# BUILD_GC_SECTIONS is not set
