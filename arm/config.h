@@ -16,10 +16,13 @@
 #define DRV_LED 1
 #define DRV_LED_GPIO 1
 #define DRV_SPI 1
+#define DRV_SPI_LPC 1
+#define DRV_I2C 1
+#define DRV_I2C_LPC 1
 #define DRV_UART 1
 #define DRV_UART_LPC 1
 #define LINT_LEVEL 3
 #define LINT_MISRA 1
 #define BUILD_OPTIMIZATION "-Os"
 #define BUILD_CCACHE 1
-#define BUILD_FLTO 1
+#define BUILD_GC_SECTIONS 1

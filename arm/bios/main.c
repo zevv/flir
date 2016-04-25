@@ -21,6 +21,7 @@
 #include "bios/relay.h"
 #include "bios/rtc.h"
 #include "bios/spi.h"
+#include "bios/i2c.h"
 #include "bios/uart.h"
 #include "bios/sysinfo.h"
 
@@ -35,6 +36,7 @@
 #include "drv/relay/relay.h"
 #include "drv/rtc/rtc.h"
 #include "drv/spi/spi.h"
+#include "drv/i2c/i2c.h"
 #include "drv/uart/uart.h"
 
 #include "lib/config.h"
@@ -72,6 +74,9 @@ void dev_init(struct dev_descriptor *desc, void *ptr)
 #endif
 #ifdef DRV_SPI
 	DO_INIT(SPI, spi);
+#endif
+#ifdef DRV_I2C
+	DO_INIT(I2C, i2c);
 #endif
 #ifdef DRV_ADC
 	DO_INIT(ADC, adc);

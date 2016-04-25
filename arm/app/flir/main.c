@@ -2,12 +2,14 @@
 #include <string.h>
 
 #include "bios/bios.h"
+#include "bios/uart.h"
 #include "bios/printd.h"
 #include "bios/gpio.h"
 #include "bios/cmd.h"
 #include "bios/evq.h"
 #include "bios/led.h"
 #include "bios/can.h"
+#include "bios/spi.h"
 
 #include "lib/config.h"
 
@@ -78,7 +80,7 @@ static uint8_t USB_StringDescriptor[] = {
 static ROM **rom = (ROM **)0x1fff1ff8;
 static USB_DEV_INFO DeviceInfo;
 static HID_DEVICE_INFO HidDevInfo;
-
+static uint8_t img[60][80];
 
 void usb_irq(void)
 {
@@ -88,14 +90,17 @@ void usb_irq(void)
 
 void GetInReport(uint8_t src[], uint32_t length)
 {
-	static int i = 0;
-	src[0] = i++;;
+	static uint8_t line = 0;
+
+	src[0] = line;
+	memcpy(&src[1], img[line], 63);
+
+	line = (line + 1) % 60;
 }
 
 
 void SetOutReport(uint8_t dst[], uint32_t length)
 {
-	led_set(&led7, dst[0]);
 }
 
 
@@ -150,12 +155,68 @@ static void on_ev_boot(event_t *ev, void *data)
 
 EVQ_REGISTER(EV_BOOT, on_ev_boot);
 
+
 static void on_ev_tick(event_t *ev, void *data)
 {
-	printd("click\n");
+	uint8_t buf[164];
+
+	uint8_t i;
+	uint8_t vmin = 255;
+	uint8_t vmax = 0;
+
+	if(0) {
+		Chip_GPIO_WritePortBit(LPC_GPIO_PORT, 2, 10, 0);
+		volatile int j;
+		for(j=0; j<550000; j++);
+		Chip_GPIO_WritePortBit(LPC_GPIO_PORT, 2, 10, 1);
+	}
+
+
+	for(i=0; i<150; i++) {
+		spi_read(&spi0, buf, sizeof(buf));
+
+		uint16_t id = ((buf[0] << 8) | buf[1]) & 0x0fff;
+
+		if(id < 60) {
+
+			uint8_t x;
+			uint8_t *p = buf + 4;
+
+			for(x=0; x<80; x++) {
+
+				uint16_t v = 0;
+				v += *p++ << 8;
+				v += *p++;
+
+				if(v < vmin) vmin = v;
+				if(v > vmax) vmax = v;
+				
+				img[id][x] = (v - vmin) >> 3;
+			}
+		}
+	}
+
+	return;
+
+	uint8_t dv = vmax - vmin;
+	
+	printd("\e[H");
+	printd("%d %d %d\n", vmin, vmax, dv);
+
+	if(dv != 0) {
+		uint8_t y, x;
+		for(y=0; y<60; y+=2) {
+			for(x=0; x<80; x++) {
+				uint8_t v = 10 * (img[y][x] - vmin) / dv;
+				if(v > 9) v = 9;
+				uart_tx(" .:-=+*#%@"[v]);
+			}
+			printd("\n");
+		}
+	}
 }
 
-EVQ_REGISTER(EV_BUTTON, on_ev_tick);
+EVQ_REGISTER(EV_TICK_10HZ, on_ev_tick);
 
 
 static rv on_cmd_usb(uint8_t argc, char **argv)

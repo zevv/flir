@@ -10,6 +10,7 @@ include drv/rtc/Makefile
 include drv/uart/Makefile
 include drv/eeprom/Makefile
 include drv/spi/Makefile
+include drv/i2c/Makefile
 include drv/mmc/Makefile
 
 LINTFLAGS += '+libm(drv\*\*-linux.c)'

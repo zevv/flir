@@ -20,4 +20,5 @@ SRC-$(DRV_RTC)		+= bios/rtc.c
 SRC-$(DRV_SPI)		+= bios/spi.c
 SRC-$(DRV_GPIO)		+= bios/gpio.c
 SRC-$(DRV_MMC)		+= bios/mmc.c
+SRC-$(DRV_I2C)		+= bios/i2c.c
 

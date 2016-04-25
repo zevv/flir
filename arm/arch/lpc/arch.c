@@ -15,6 +15,8 @@ uint32_t SystemCoreClock = 8000000;
 
 /*lint -esym(9003,_srom,_erom,_sdata,_edata,_sbss,_ebss,_estack) */
 
+extern uint8_t _stext;
+extern uint8_t _etext;
 extern uint8_t _srom;
 extern uint8_t _erom;
 extern uint8_t _sdata;
@@ -32,6 +34,7 @@ void _entry_rom(void);
 void systick_irq(void);
 void uart_irq(void);
 void usb_irq(void);
+void ssp_irq(void);
 
 static volatile uint32_t jiffies = 0;
 
@@ -45,7 +48,7 @@ void dump_stack(void)
 
 	uint32_t *p = sp;
 	while(p < (uint32_t *)&_estack) {
-		if(*p >= (uint32_t)&_srom && *p < (uint32_t)&_erom) {
+		if(*p >= (uint32_t)&_stext && *p < (uint32_t)&_etext) {
 			printd("%08x\n", *p);
 		}
 		p++;
@@ -148,6 +151,7 @@ __attribute__(( __used__ ))
 
 	[UART0_IRQn + 16] = uart_irq,
 	[USB0_IRQn + 16] = usb_irq,
+	[SSP0_IRQn + 16] = ssp_irq,
 
 };
 

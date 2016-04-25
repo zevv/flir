@@ -10,6 +10,7 @@ source "drv/led/config.in"
 source "drv/relay/config.in"
 source "drv/rtc/config.in"
 source "drv/spi/config.in"
+source "drv/i2c/config.in"
 source "drv/uart/config.in"
 source "drv/mmc/config.in"
 

@@ -7,15 +7,17 @@ SECTIONS {
 	_srom = .;
 
 	.vectors : { 
-		*(.vectors); 
+		KEEP(*(.vectors));
 	}
 
 	.text : { 
-		*(.text)
+		_stext = .;
+		*(.text*)
+		_etext = .;
 	}
 
 	.rodata : { 
-		*(.rodata) 
+		*(.rodata*) 
 	}
 
 	. = ALIGN(16);
@@ -23,20 +25,16 @@ SECTIONS {
 
 	.data 0x10000400: AT(_erom) {
 		_sdata = .;
-		*(.data);
+		*(.data*);
 		_edata = .;
 	}
 
 	.bss : {
 		_sbss = .;
 		*(.bss*);
-		*(COMMON);
 		_ebss = .;
 	}
 
-	/DISCARD/ : { 
-		*(.text.ramboot); 
-	}
 }
 
 PROVIDE(_estack = 0x10000400);

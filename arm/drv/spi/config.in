@@ -9,6 +9,11 @@ config DRV_SPI_STM32
 	default y
 	depends on DRV_SPI && ARCH_STM32
 
+config DRV_SPI_LPC
+	bool "LPC SPI driver"
+	default y
+	depends on DRV_SPI && ARCH_LPC
+
 config DRV_SPI_AVR
 	bool "Atmel AVR SPI driver"
 	default y

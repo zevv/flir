@@ -19,6 +19,7 @@ struct dev_spi {
 struct drv_spi {
 	rv (*init)(struct dev_spi *spi);
 	rv (*read)(struct dev_spi *spi, void *buf, size_t len);
+	rv (*read_async)(struct dev_spi *spi, void *buf, size_t len, void(*fn)(void));
 	rv (*write)(struct dev_spi *spi, const void *buf, size_t len);
 	rv (*read_write)(struct dev_spi *spi, void *buf, size_t len);
 };

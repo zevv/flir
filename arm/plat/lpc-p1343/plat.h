@@ -17,7 +17,8 @@ extern struct dev_led led5;
 extern struct dev_led led6;
 extern struct dev_led led7;
 extern struct dev_uart uart0;
-extern struct dev_mmc mmc0;
+extern struct dev_spi spi0;
+extern struct dev_i2c i2c0;
 
 #define DEFAULT_UART_DEV uart0
 

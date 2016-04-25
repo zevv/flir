@@ -1,0 +1,12 @@
+
+menuconfig DRV_I2C
+	bool "I2C drivers"
+
+if DRV_I2C
+
+config DRV_I2C_LPC
+	bool "LPC I2C driver"
+	default y
+	depends on DRV_I2C && ARCH_LPC
+
+endif

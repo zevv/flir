@@ -1,0 +1,6 @@
+*.o
+*.d
+*.swp
+.config
+.config.old
+cscope.out

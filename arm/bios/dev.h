@@ -17,6 +17,7 @@ enum dev_type {
 	DEV_TYPE_SPI,
 	DEV_TYPE_GPIO,
 	DEV_TYPE_MMC,
+	DEV_TYPE_I2C,
 
 	DEV_TYPE_MAX,
 };

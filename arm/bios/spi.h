@@ -8,6 +8,7 @@ struct dev_spi;
 
 rv spi_init(struct dev_spi *dev);
 rv spi_read(struct dev_spi *dev, void *buf, size_t len);
+rv spi_read_async(struct dev_spi *dev, void *buf, size_t len, void(*fn)(void));
 rv spi_write(struct dev_spi *dev, const void *buf, size_t len);
 rv spi_read_write(struct dev_spi *dev, void *buf, size_t len);
 

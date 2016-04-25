@@ -7,6 +7,8 @@
 #include "drv/button/button-gpio.h"
 #include "drv/gpio/gpio-lpc.h"
 #include "drv/gpio/gpio.h"
+#include "drv/i2c/i2c-lpc.h"
+#include "drv/spi/spi-lpc.h"
 #include "drv/uart/uart-lpc.h"
 
 const uint32_t OscRateIn = 12000000;
@@ -28,6 +30,12 @@ DEV_INIT_GPIO(gpio2, drv_gpio_lpc,
 
 DEV_INIT_GPIO(gpio3, drv_gpio_lpc,
 	.port = 3,
+)
+
+DEV_INIT_I2C(i2c0, drv_i2c_lpc,
+)
+
+DEV_INIT_SPI(spi0, drv_spi_lpc,
 )
 
 DEV_INIT_LED(led0, drv_led_gpio,

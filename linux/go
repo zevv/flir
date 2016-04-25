@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+gcc t.c -I/usr/include/hidapi -lhidapi-libusb
+
+sudo ./a.out | \
+	ffplay \
+		-f rawvideo \
+		-pixel_format gray \
+		-video_size 63x60 \
+		-vf scale=300:-3 \
+		-

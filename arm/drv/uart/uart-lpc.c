@@ -38,6 +38,8 @@ static rv tx(struct dev_uart *dev, uint8_t c)
 }
 
 
+void dump_stack(void);
+
 void uart_irq(void)
 {
 
@@ -45,10 +47,14 @@ void uart_irq(void)
 		char c;
 		int n = Chip_UART_Read(LPC_USART, &c, sizeof(c));
 		if(n) {
-			event_t ev;
-			ev.type = EV_UART;
-			ev.uart.data = c;
-			evq_push(&ev);
+			if(c == '~') {
+				dump_stack();
+			} else {
+				event_t ev;
+				ev.type = EV_UART;
+				ev.uart.data = c;
+				evq_push(&ev);
+			}
 		} else {
 			break;
 		}
