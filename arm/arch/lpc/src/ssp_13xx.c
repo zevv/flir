@@ -1,3 +1,7 @@
+
+#include "bios/bios.h"
+#include "bios/printd.h"
+
 /*
  * @brief LPC13xx SSP Registers and control functions
  *
@@ -470,6 +474,7 @@ void Chip_SSP_SetBitRate(LPC_SSP_T *pSSP, uint32_t bitRate)
 		}
 	}
 
+	printd("div %d  pre %d\n", cr0_div, prescale);
 	Chip_SSP_SetClockRate(pSSP, cr0_div, prescale);
 }
 

@@ -6,8 +6,9 @@ gcc t.c -I/usr/include/hidapi -lhidapi-libusb
 
 sudo ./a.out | \
 	ffplay \
+		-loglevel warning \
 		-f rawvideo \
-		-pixel_format gray \
+		-pixel_format rgb24 \
 		-video_size 63x60 \
 		-vf scale=300:-3 \
 		-

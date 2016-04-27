@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "bios/bios.h"
+#include "bios/arch.h"
 #include "bios/uart.h"
 #include "bios/printd.h"
 #include "bios/gpio.h"
@@ -25,7 +26,7 @@ typedef struct _USB_DEVICE_INFO {
 typedef struct _USBD {
 	void (*init_clk_pins)(void);
 	void (*isr)(void);
-	void (*init)( USB_DEV_INFO * DevInfoPtr );
+	void (*init)( const USB_DEV_INFO * DevInfoPtr );
 	void (*connect)(uint32_t con);
 } USBD;
 
@@ -48,15 +49,17 @@ typedef struct _HID_DEVICE_INFO {
 } HID_DEVICE_INFO;
 
 
+static void GetInReport(uint8_t src[], uint32_t length);
+static void SetOutReport(uint8_t dst[], uint32_t length);
 
-static uint8_t USB_StringDescriptor[] = {
+static const uint8_t USB_StringDescriptor[] = {
 
 	0x04, USB_STRING_DESCRIPTOR_TYPE, WBVAL(0x0409),
 
 	/* Index 0x04: Manufacturer */
 
-	0x1C, USB_STRING_DESCRIPTOR_TYPE,
-	'N',0, 'X',0, 'P',0,' ',0,'S',0, 'E',0, 'M',0,'I',0, 'C',0,'O',0,'N',0, 'D',0,' ',0,
+	0x08, USB_STRING_DESCRIPTOR_TYPE,
+	'F',0, 'L',0, 'I',0, 'R',0,
 
 	/* Index 0x20: Product */
 
@@ -77,10 +80,28 @@ static uint8_t USB_StringDescriptor[] = {
 };
 
 
+static const HID_DEVICE_INFO HidDevInfo = {
+	.idVendor = 0x1234,
+	.idProduct = 0x5678,
+	.bcdDevice = 0x9abc,
+	.StrDescPtr = (uint32_t) &USB_StringDescriptor[0],
+	.InReportCount = 64,
+	.OutReportCount = 64,
+	.SampleInterval = 1,
+	.InReport = GetInReport,
+	.OutReport = SetOutReport,
+};
+
+
+static const USB_DEV_INFO DeviceInfo = {
+	.DevType = USB_DEVICE_CLASS_HUMAN_INTERFACE,
+	.DevDetailPtr = (uint32_t)&HidDevInfo,
+};
+
+
 static ROM **rom = (ROM **)0x1fff1ff8;
-static USB_DEV_INFO DeviceInfo;
-static HID_DEVICE_INFO HidDevInfo;
-static uint8_t img[60][80];
+static uint8_t img[60][63];
+
 
 void usb_irq(void)
 {
@@ -88,7 +109,7 @@ void usb_irq(void)
 }
 
 
-void GetInReport(uint8_t src[], uint32_t length)
+static void GetInReport(uint8_t src[], uint32_t length)
 {
 	static uint8_t line = 0;
 
@@ -99,7 +120,7 @@ void GetInReport(uint8_t src[], uint32_t length)
 }
 
 
-void SetOutReport(uint8_t dst[], uint32_t length)
+static void SetOutReport(uint8_t dst[], uint32_t length)
 {
 }
 
@@ -117,19 +138,6 @@ static void on_ev_boot(event_t *ev, void *data)
 	gpio_set_pin(&gpio0, 6, 1);
 
 	/* Setup ROM descriptors */
-
-	HidDevInfo.idVendor = 0x1234;
-	HidDevInfo.idProduct = 0x5678;
-	HidDevInfo.bcdDevice = 0x9abc;
-	HidDevInfo.StrDescPtr = (uint32_t) &USB_StringDescriptor[0];
-	HidDevInfo.InReportCount = 64;
-	HidDevInfo.OutReportCount = 64;
-	HidDevInfo.SampleInterval = 1;
-	HidDevInfo.InReport = GetInReport;
-	HidDevInfo.OutReport = SetOutReport;
-
-	DeviceInfo.DevType = USB_DEVICE_CLASS_HUMAN_INTERFACE;
-	DeviceInfo.DevDetailPtr = (uint32_t)&HidDevInfo;
 
 	//Chip_USB_Init();
 
@@ -155,68 +163,72 @@ static void on_ev_boot(event_t *ev, void *data)
 
 EVQ_REGISTER(EV_BOOT, on_ev_boot);
 
+static uint16_t vmin = 0xffff;
+static uint16_t vmax = 0x0000;
+static uint16_t vmin2 = 0xffff;
+static uint16_t vmax2 = 0x0000;
 
-static void on_ev_tick(event_t *ev, void *data)
+static void lepton_read_packet(void)
 {
-	uint8_t buf[164];
+	uint16_t buf[82];
 
-	uint8_t i;
-	uint8_t vmin = 255;
-	uint8_t vmax = 0;
+	spi_read(&spi0, buf, sizeof(buf));
 
-	if(0) {
-		Chip_GPIO_WritePortBit(LPC_GPIO_PORT, 2, 10, 0);
-		volatile int j;
-		for(j=0; j<550000; j++);
-		Chip_GPIO_WritePortBit(LPC_GPIO_PORT, 2, 10, 1);
-	}
+	uint16_t id = buf[0] & 0x0fff;
 
+	if(id < 60) {
 
-	for(i=0; i<150; i++) {
-		spi_read(&spi0, buf, sizeof(buf));
-
-		uint16_t id = ((buf[0] << 8) | buf[1]) & 0x0fff;
-
-		if(id < 60) {
-
-			uint8_t x;
-			uint8_t *p = buf + 4;
-
-			for(x=0; x<80; x++) {
-
-				uint16_t v = 0;
-				v += *p++ << 8;
-				v += *p++;
-
-				if(v < vmin) vmin = v;
-				if(v > vmax) vmax = v;
-				
-				img[id][x] = (v - vmin) >> 3;
-			}
+		if(id == 59) {
+			vmin2 = vmin;
+			vmax2 = vmax;
+			vmin = 0xffff;
+			vmax = 0x0000;
 		}
-	}
+		
+		uint16_t *p = (void *)buf + 4;
 
-	return;
+		uint8_t x;
+		for(x=0; x<63; x++) {
 
-	uint8_t dv = vmax - vmin;
-	
-	printd("\e[H");
-	printd("%d %d %d\n", vmin, vmax, dv);
+			uint16_t v = *p++;
 
-	if(dv != 0) {
-		uint8_t y, x;
-		for(y=0; y<60; y+=2) {
-			for(x=0; x<80; x++) {
-				uint8_t v = 10 * (img[y][x] - vmin) / dv;
-				if(v > 9) v = 9;
-				uart_tx(" .:-=+*#%@"[v]);
+			if(v < vmin) vmin = v;
+			if(v > vmax) vmax = v;
+
+			uint16_t dv = vmax2 - vmin2;
+			if(dv > 0) {
+				int16_t w = 255 * (v - vmin2) / dv;
+				if(w < 0) w = 0;
+				if(w > 255) w = 255;
+				img[id][x] = w;
 			}
-			printd("\n");
+
 		}
 	}
 }
 
-EVQ_REGISTER(EV_TICK_10HZ, on_ev_tick);
+
+static void lepton_read_frame(void)
+{
+	uint8_t i;
+
+	for(i=0; i<80; i++) {
+		lepton_read_packet();
+	}
+}
+
+
+static void on_ev_tick(event_t *ev, void *data)
+{
+	static uint8_t n = 0;
+	
+	if(++n == 3) {
+		lepton_read_frame();
+		n = 0;
+	}
+}
+
+EVQ_REGISTER(EV_TICK_100HZ, on_ev_tick);
 
 
 static rv on_cmd_usb(uint8_t argc, char **argv)

@@ -32,8 +32,8 @@ static rv init(struct dev_spi *dev)
 	Chip_IOCON_SetPinMuxing(LPC_IOCON, pinmuxing, sizeof(pinmuxing) / sizeof(PINMUX_GRP_T));
 
 	Chip_SSP_Init(LPC_SSP0);
-	Chip_SSP_SetBitRate(LPC_SSP0, 3 * 1000 * 1000);
-	Chip_SSP_SetFormat(LPC_SSP0, SSP_BITS_8, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA1_CPOL1);
+	Chip_SSP_SetBitRate(LPC_SSP0, 20000000);
+	Chip_SSP_SetFormat(LPC_SSP0, SSP_BITS_16, SSP_FRAMEFORMAT_SPI, SSP_CLOCK_CPHA1_CPOL1);
 	Chip_SSP_SetMaster(LPC_SSP0, 1);
 	Chip_SSP_Enable(LPC_SSP0);
 	

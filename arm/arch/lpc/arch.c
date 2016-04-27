@@ -202,7 +202,9 @@ uint32_t HAL_GetTick(void)
 
 void arch_idle(void)
 {
-	__WFI();
+	//void on_idle(void);
+	//on_idle();
+	//__WFI();
 }
 
 
