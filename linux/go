@@ -2,7 +2,7 @@
 
 set -e
 
-gcc t.c -I/usr/include/hidapi -lhidapi-libusb
+gcc -lm -g -fsanitize=address -Wall -Werror t.c -I/usr/include/hidapi -lhidapi-libusb
 
 sudo ./a.out | \
 	ffplay \

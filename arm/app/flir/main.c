@@ -100,7 +100,7 @@ static const USB_DEV_INFO DeviceInfo = {
 
 
 static ROM **rom = (ROM **)0x1fff1ff8;
-static uint8_t img[60][63];
+static uint8_t img[60][80];
 
 
 void usb_irq(void)
@@ -163,11 +163,6 @@ static void on_ev_boot(event_t *ev, void *data)
 
 EVQ_REGISTER(EV_BOOT, on_ev_boot);
 
-static uint16_t vmin = 0xffff;
-static uint16_t vmax = 0x0000;
-static uint16_t vmin2 = 0xffff;
-static uint16_t vmax2 = 0x0000;
-
 static void lepton_read_packet(void)
 {
 	uint16_t buf[82];
@@ -178,29 +173,27 @@ static void lepton_read_packet(void)
 
 	if(id < 60) {
 
-		if(id == 59) {
-			vmin2 = vmin;
-			vmax2 = vmax;
-			vmin = 0xffff;
-			vmax = 0x0000;
-		}
-		
-		uint16_t *p = (void *)buf + 4;
+		uint16_t *pi = (void *)buf + 4;
+		uint8_t *po = img[id];
 
 		uint8_t x;
+		uint16_t v = 0;
+		uint16_t w = 0;
+
 		for(x=0; x<63; x++) {
 
-			uint16_t v = *p++;
+			v = *pi++;
 
-			if(v < vmin) vmin = v;
-			if(v > vmax) vmax = v;
-
-			uint16_t dv = vmax2 - vmin2;
-			if(dv > 0) {
-				int16_t w = 255 * (v - vmin2) / dv;
-				if(w < 0) w = 0;
-				if(w > 255) w = 255;
-				img[id][x] = w;
+			if(x == 0) {
+				w = v;
+				*po++ = (w & 0xff);
+				*po++ = (w >> 8);
+			} else {
+				int32_t d = v - w;
+				if(d < -127) d = -127;
+				if(d > 127) d = 127;
+				w += d;
+				*po++ = d;
 			}
 
 		}
