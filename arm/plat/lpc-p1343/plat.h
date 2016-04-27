@@ -3,6 +3,8 @@
 
 void plat_init(void);
 
+extern struct dev_button but1;
+extern struct dev_button but2;
 extern struct dev_gpio gpio0;
 extern struct dev_gpio gpio1;
 extern struct dev_gpio gpio2;

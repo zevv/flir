@@ -2,7 +2,9 @@
 #include <string.h>
 
 #include "bios/bios.h"
+#include "bios/i2c.h"
 #include "bios/arch.h"
+#include "bios/button.h"
 #include "bios/uart.h"
 #include "bios/printd.h"
 #include "bios/gpio.h"
@@ -13,9 +15,12 @@
 #include "bios/spi.h"
 
 #include "lib/config.h"
+#include "lib/atoi.h"
 
 #include "arch/lpc/inc/chip.h"
 #include "arch/lpc/inc/usbd.h"
+
+#include "lepton.h"
 
 typedef struct _USB_DEVICE_INFO {
 	uint16_t DevType;
@@ -100,7 +105,7 @@ static const USB_DEV_INFO DeviceInfo = {
 
 
 static ROM **rom = (ROM **)0x1fff1ff8;
-static uint8_t img[60][80];
+extern uint8_t img[60][80];
 
 
 void usb_irq(void)
@@ -128,8 +133,7 @@ static void SetOutReport(uint8_t dst[], uint32_t length)
 
 static void on_ev_boot(event_t *ev, void *data)
 {
-	(void)led_set(&led_green, LED_STATE_ON);
-	(void)led_set(&led_yellow, LED_STATE_BLINK);
+	(void)led_set(&led0, LED_STATE_BLINK);
 	printd("FLIR\n");
 
 	/* Connect USB on olimex board */
@@ -158,79 +162,36 @@ static void on_ev_boot(event_t *ev, void *data)
 
 	(*rom)->pUSBD->init(&DeviceInfo);
 	(*rom)->pUSBD->connect(1);
+
+	/* Configure lepton */
+
+	lepton_set_16(LEPTON_MOD_AGC, LEPTON_CMD_ID_AGC, 0);
 }
 
 
 EVQ_REGISTER(EV_BOOT, on_ev_boot);
 
-static void lepton_read_packet(void)
+
+static void on_ev_button(event_t *ev, void *data)
 {
-	uint16_t buf[82];
+	static uint8_t agc = 0;
 
-	spi_read(&spi0, buf, sizeof(buf));
+	if(ev->button.state == BUTTON_STATE_PUSH) {
 
-	uint16_t id = buf[0] & 0x0fff;
+		if(ev->button.dev == &but1) {
+			agc = 1-agc;
+			lepton_set_16(LEPTON_MOD_AGC, LEPTON_CMD_ID_AGC, agc);
+			led_set(&led7, agc);
+		}
 
-	if(id < 60) {
-
-		uint16_t *pi = (void *)buf + 4;
-		uint8_t *po = img[id];
-
-		uint8_t x;
-		uint16_t v = 0;
-		uint16_t w = 0;
-
-		for(x=0; x<63; x++) {
-
-			v = *pi++;
-
-			if(x == 0) {
-				w = v;
-				*po++ = (w & 0xff);
-				*po++ = (w >> 8);
-			} else {
-				int32_t d = v - w;
-				if(d < -127) d = -127;
-				if(d > 127) d = 127;
-				w += d;
-				*po++ = d;
-			}
-
+		if(ev->button.dev == &but2) {
+			lepton_run(LEPTON_MOD_SYS, LEPTON_CMD_ID_RUN_FCC);
 		}
 	}
 }
 
-
-static void lepton_read_frame(void)
-{
-	uint8_t i;
-
-	for(i=0; i<80; i++) {
-		lepton_read_packet();
-	}
-}
-
-
-static void on_ev_tick(event_t *ev, void *data)
-{
-	static uint8_t n = 0;
-	
-	if(++n == 3) {
-		lepton_read_frame();
-		n = 0;
-	}
-}
-
-EVQ_REGISTER(EV_TICK_100HZ, on_ev_tick);
-
-
-static rv on_cmd_usb(uint8_t argc, char **argv)
-{
-	return RV_OK;
-}
-
-CMD_REGISTER(usb, on_cmd_usb, "f[req]");
+EVQ_REGISTER(EV_BUTTON, on_ev_button);
 
 /*
  * End
- */
+  */

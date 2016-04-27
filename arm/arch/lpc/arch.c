@@ -147,6 +147,7 @@ __attribute__(( __used__ ))
 	[0] = &_sdata,
 	[1] = _entry_rom,
 	[3] = hardfault_irq,
+	[7] = (void *)0x12345678, /* CRC vector */
 	[15] = systick_irq, 
 
 	[UART0_IRQn + 16] = uart_irq,
