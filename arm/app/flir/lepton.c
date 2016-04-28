@@ -45,7 +45,7 @@ static int lepton_read_packet(void)
 		uint8_t x;
 
 		for(x=0; x<80; x++) {
-			v = buf[x+2] >> 1;
+			v = buf[x+2] >> 2;
 			bw_golomb(&bw, v-w, golomb_k);
 			w = v;
 		}
@@ -166,6 +166,7 @@ static rv on_cmd_lepton(uint8_t argc, char **argv)
 		}
 		
 		if(cmd == 'k' && argc >= 2 ) {
+			printd("%d\n", dmax);
 			golomb_k = a_to_s32(argv[1]);
 			dmax = 0;
 			r = RV_OK;
