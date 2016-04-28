@@ -105,7 +105,18 @@ static const USB_DEV_INFO DeviceInfo = {
 
 
 static ROM **rom = (ROM **)0x1fff1ff8;
-extern uint8_t img[60][80];
+
+uint8_t printd_buf[63] = "Hallo\n";
+uint8_t printd_ptr = 6;
+
+
+void flir_tx(uint8_t c)
+{
+	if(printd_ptr < sizeof(printd_buf)) {
+		printd_buf[printd_ptr++] = c;
+		printd_buf[printd_ptr] = 0;
+	}
+}
 
 
 void usb_irq(void)
@@ -114,19 +125,31 @@ void usb_irq(void)
 }
 
 
-static void GetInReport(uint8_t src[], uint32_t length)
+static void GetInReport(uint8_t src[], uint32_t len)
 {
 	static uint8_t line = 0;
+	if(len > 63) len = 63;
 
-	src[0] = line;
-	memcpy(&src[1], img[line], 63);
-
-	line = (line + 1) % 60;
+	if(printd_ptr > 0) {
+		src[0] = 0xff;
+		memcpy(&src[1], printd_buf, len);
+		printd_ptr = 0;
+	} else {
+		src[0] = line;
+		memcpy(src+1, img[line], len);
+		line++;
+		if(line == 60) line = 0;
+	}
 }
 
 
 static void SetOutReport(uint8_t dst[], uint32_t length)
 {
+	event_t ev;
+	ev.type = EV_UART;
+	ev.uart.data = dst[0];
+	evq_push(&ev);
+	led_set(&led1, LED_STATE_ON);
 }
 
 

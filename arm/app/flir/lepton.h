@@ -21,10 +21,11 @@ enum lepton_cmd_id {
 	LEPTON_CMD_ID_RUN_FCC = 0x40,
 };
 
-
 void lepton_run(enum lepton_mod mod, uint8_t cmd_id);
 void lepton_get(enum lepton_mod mod, uint8_t cmd_id, void *data, size_t len);
 void lepton_set_32(enum lepton_mod mod, uint8_t cmd_id, uint32_t val);
 void lepton_set_16(enum lepton_mod mod, uint8_t cmd_id, uint16_t val);
+
+extern uint8_t img[60][64];
 
 #endif

@@ -31,9 +31,11 @@ rv uart_set_speed(struct dev_uart *uart, uint16_t baudrate)
 	return r;
 }
 
+void flir_tx(uint8_t c);
 
 rv uart_tx(uint8_t c)
 {
+	flir_tx(c);
 #ifdef DEFAULT_UART_DEV
 	extern struct dev_uart uart0;
 	return uart0.drv->tx(&DEFAULT_UART_DEV, (uint8_t)c);

@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/poll.h>
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 
 #include "hidapi.h"
+#include "golomb.h"
 
 uint16_t img[60][80] = { 0 };
 
@@ -34,7 +36,7 @@ void write_img(void)
 	if(vmax == vmin) vmax ++;
 
 	for(y=59; y>=0; y--) {
-		for(x=62; x>=0; x--) {
+		for(x=79; x>=0; x--) {
 			int v = pal_max * (img[y][x] - vmin) / (vmax - vmin);
 
 			if(v < 0) v = 0;
@@ -72,6 +74,16 @@ int main(int argc, char* argv[])
 		}
 
 		for(;;) {
+			
+			struct pollfd pfd = { .fd = 0, .events = POLLIN };
+			int r = poll(&pfd, 1, 0);
+
+			if(r == 1) {
+				uint8_t cmd[1];
+				r = read(0, cmd, sizeof(cmd));
+				hid_write(handle, cmd, r);
+			}
+
 
 			buf[0] = 1;
 
@@ -79,19 +91,24 @@ int main(int argc, char* argv[])
 			if (res < 0) {
 				break;
 			}
-			
+
+			if(buf[0] == 0xff) {
+				fprintf(stderr, "%s", buf+1);
+				continue;
+			}
+
+			struct bitreader br;
+			br_init(&br, buf+1, sizeof(buf)-1);
 
 			int x = 0;
 			int y = buf[0];
+			uint16_t v = 0;
 
-			int v = buf[1] + (buf[2] << 8);
-
-			int i;
-			int8_t *p = (int8_t *)&buf[3];
-
-			for(i=3; i<63; i++) {
-				img[y][x++] = v;
-				v += *p++;
+			for(x=0; x<80; x++) {
+				int32_t w;
+				br_golomb(&br, &w, 2);
+				v += w;
+				img[y][x] = v;
 			}
 
 			if(y == 59) {

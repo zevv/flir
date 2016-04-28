@@ -20,11 +20,14 @@
 #include "arch/lpc/inc/chip.h"
 
 #include "lepton.h"
+#include "golomb.h"
 
-uint8_t img[60][80];
+uint8_t golomb_k = 2;
+static int dmax = 0;
+uint8_t img[60][64];
+uint8_t line[64];
 
-
-static void lepton_read_packet(void)
+static int lepton_read_packet(void)
 {
 	uint16_t buf[82];
 
@@ -34,30 +37,33 @@ static void lepton_read_packet(void)
 
 	if(id < 60) {
 
-		uint16_t *pi = (void *)buf + 4;
-		uint8_t *po = img[id];
+		struct bitwriter bw;
+		bw_init(&bw, line, sizeof(line));
 
-		uint8_t x;
 		uint16_t v = 0;
 		uint16_t w = 0;
+		uint8_t x;
 
-		for(x=0; x<63; x++) {
-
-			v = *pi++;
-
-			if(x == 0) {
-				w = v;
-				*po++ = (w & 0xff);
-				*po++ = (w >> 8);
-			} else {
-				int32_t d = v - w;
-				if(d < -127) d = -127;
-				if(d > 127) d = 127;
-				w += d;
-				*po++ = d;
-			}
-
+		for(x=0; x<80; x++) {
+			v = buf[x+2] >> 1;
+			bw_golomb(&bw, v-w, golomb_k);
+			w = v;
 		}
+		bw_flush(&bw);
+
+		arch_irq_disable();
+		memcpy(img[id], line, sizeof(line));
+		arch_irq_enable();
+
+		int d = bw.p - img[id];
+		if(d > dmax) {
+			dmax = d;
+			printd("%d\n", dmax);
+		}
+
+		return 1;
+	} else {
+		return 0;
 	}
 }
 
@@ -66,20 +72,16 @@ static void lepton_read_frame(void)
 {
 	uint8_t i;
 
-	for(i=0; i<80; i++) {
-		lepton_read_packet();
+	for(i=0; i<60; i++) {
+		int r = lepton_read_packet();
+		if(r == 0) return;
 	}
 }
 
 
 static void on_ev_tick(event_t *ev, void *data)
 {
-	static uint8_t n = 0;
-	
-	if(++n == 3) {
-		lepton_read_frame();
-		n = 0;
-	}
+	lepton_read_frame();
 }
 
 EVQ_REGISTER(EV_TICK_100HZ, on_ev_tick);
@@ -160,6 +162,12 @@ static rv on_cmd_lepton(uint8_t argc, char **argv)
 		
 		if(cmd == 't' && argc >= 2u) {
 			lepton_set_16(LEPTON_MOD_SYS, LEPTON_CMD_ID_TELEMETRY, a_to_s32(argv[1]));
+			r = RV_OK;
+		}
+		
+		if(cmd == 'k' && argc >= 2 ) {
+			golomb_k = a_to_s32(argv[1]);
+			dmax = 0;
 			r = RV_OK;
 		}
 	}

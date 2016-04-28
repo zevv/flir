@@ -2,13 +2,19 @@
 
 set -e
 
-gcc -lm -g -fsanitize=address -Wall -Werror t.c -I/usr/include/hidapi -lhidapi-libusb
+gcc \
+	-lm -g \
+	-fsanitize=address \
+	-Wall -Werror \
+	t.c ../arm/app/flir/golomb.c \
+	-I../arm/app/flir \
+	-I/usr/include/hidapi -lhidapi-libusb
 
 sudo ./a.out | \
 	ffplay \
 		-loglevel warning \
 		-f rawvideo \
 		-pixel_format rgb24 \
-		-video_size 63x60 \
+		-video_size 80x60 \
 		-vf scale=300:-3 \
 		-

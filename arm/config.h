@@ -23,6 +23,6 @@
 #define DRV_UART_LPC 1
 #define LINT_LEVEL 3
 #define LINT_MISRA 1
-#define BUILD_OPTIMIZATION "-Os"
+#define BUILD_OPTIMIZATION "-O3"
 #define BUILD_CCACHE 1
 #define BUILD_GC_SECTIONS 1
