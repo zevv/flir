@@ -44,7 +44,7 @@ void write_img(void)
 	vmin_avg = vmin_avg * 0.9 + vmin * 0.1;
 	vmax_avg = vmax_avg * 0.9 + vmax * 0.1;
 
-	fprintf(stderr, "%d %d\n", vmin, vmax);
+//	fprintf(stderr, "%d %d\n", vmin, vmax);
 
 	int pal_max = sizeof(pal) / sizeof(pal[0]) - 1;
 

@@ -23,7 +23,6 @@
 #include "golomb.h"
 
 uint8_t golomb_k = 2;
-static int dmax = 0;
 uint8_t img[60][64];
 uint8_t line[64];
 
@@ -31,7 +30,9 @@ static int lepton_read_packet(void)
 {
 	uint16_t buf[82];
 
+	arch_irq_disable();
 	spi_read(&spi0, buf, sizeof(buf));
+	arch_irq_enable();
 
 	uint16_t id = buf[0] & 0x0fff;
 
@@ -54,12 +55,6 @@ static int lepton_read_packet(void)
 		arch_irq_disable();
 		memcpy(img[id], line, sizeof(line));
 		arch_irq_enable();
-
-		int d = bw.p - img[id];
-		if(d > dmax) {
-			dmax = d;
-			printd("%d\n", dmax);
-		}
 
 		return 1;
 	} else {
@@ -166,9 +161,7 @@ static rv on_cmd_lepton(uint8_t argc, char **argv)
 		}
 		
 		if(cmd == 'k' && argc >= 2 ) {
-			printd("%d\n", dmax);
 			golomb_k = a_to_s32(argv[1]);
-			dmax = 0;
 			r = RV_OK;
 		}
 	}

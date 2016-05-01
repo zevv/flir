@@ -25,4 +25,5 @@
 #define LINT_MISRA 1
 #define BUILD_OPTIMIZATION "-O3"
 #define BUILD_CCACHE 1
+#define BUILD_FLTO 1
 #define BUILD_GC_SECTIONS 1

@@ -108,7 +108,7 @@ static ROM **rom = (ROM **)0x1fff1ff8;
 
 uint8_t printd_buf[63] = "Hallo\n";
 uint8_t printd_ptr = 6;
-
+int flop;
 
 void flir_tx(uint8_t c)
 {
@@ -139,6 +139,13 @@ static void GetInReport(uint8_t src[], uint32_t len)
 		memcpy(src+1, img[line], len);
 		line++;
 		if(line == 60) line = 0;
+	}
+
+	if(line == 0) {
+		static int n = 0;
+		static struct dev_led *leds[] = { &led0, &led1, &led2, &led3, &led4, &led5, &led6, &led7 };
+		for(int i=0; i<8; i++) led_set(leds[i], abs(n) == i);
+		if(++n == 8) n = -6;
 	}
 }
 
@@ -211,6 +218,10 @@ static void on_ev_button(event_t *ev, void *data)
 			lepton_run(LEPTON_MOD_SYS, LEPTON_CMD_ID_RUN_FCC);
 		}
 	}
+
+	flop = (int)ev;
+
+	printd("%d\n", flop);
 }
 
 EVQ_REGISTER(EV_BUTTON, on_ev_button);

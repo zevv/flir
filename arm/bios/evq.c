@@ -8,7 +8,7 @@
 #include "bios/cmd.h"
 #include "bios/arch.h"
 
-#define EVQ_SIZE 1024u
+#define EVQ_SIZE 256u
 #define EVQ_MAX_REGISTRATIONS 32u
 
 typedef size_t evq_index;
