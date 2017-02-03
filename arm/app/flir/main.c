@@ -144,7 +144,8 @@ static void GetInReport(uint8_t src[], uint32_t len)
 	if(line == 0) {
 		static int n = 0;
 		static struct dev_led *leds[] = { &led0, &led1, &led2, &led3, &led4, &led5, &led6, &led7 };
-		for(int i=0; i<8; i++) led_set(leds[i], abs(n) == i);
+		int i;
+		for(i=0; i<8; i++) led_set(leds[i], abs(n) == i);
 		if(++n == 8) n = -6;
 	}
 }

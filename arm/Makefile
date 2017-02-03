@@ -23,7 +23,7 @@ VERSION_DEV     := 1
 VERSION_SVN     := 0
 VERSION_REV     := $(subst M,,$(VERSION_SVN))
 
-CFLAGS	+= -std=c11 -D_XOPEN_SOURCE=700 -D_DEFAULT_SOURCE
+CFLAGS	+= -D_XOPEN_SOURCE=700 -D_DEFAULT_SOURCE
 CFLAGS	+= -I.
 CFLAGS  += $(BUILD_OPTIMIZATION)
 CFLAGS  += -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers

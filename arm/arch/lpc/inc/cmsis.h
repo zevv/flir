@@ -49,8 +49,5 @@ typedef LPC1347_IRQn_Type IRQn_Type;
 /* Cortex-M3 processor and core peripherals */
 #include "core_cm3.h"
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __CMSIS_H_ */

@@ -16,5 +16,5 @@ sudo ./a.out | \
 		-f rawvideo \
 		-pixel_format rgb24 \
 		-video_size 80x60 \
-		-vf scale=300:-3 \
+		-vf pp=default/tmpnoise,scale=300:-3 \
 		-
