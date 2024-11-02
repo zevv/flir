@@ -16,19 +16,27 @@
 #include "hidapi.h"
 #include "golomb.h"
 
+struct img {
+    int w, h;
+    double *pix;
+};
+
+
 struct ctx {
     SDL_Window *win;
+    int win_w, win_h;
     double t;
     int n_cycle;
-    int w, h;
+    int flir_w, flir_h;
     hid_device *handle;
     bool running;
     int n;
-    double *img_raw;
-    double *img_re;
-    double *img_im;
-    double *img_abs;
-    double *img_pha;
+    const char *script;
+    struct img *img_raw;
+    struct img *img_re;
+    struct img *img_im;
+    struct img *img_abs;
+    struct img *img_pha;
 };
 
 
@@ -62,86 +70,100 @@ struct palette pal_phase = {
     .count = sizeof(colors_phase) / sizeof(colors_phase[0])
 };
 
-static double win_w = 1024;
-static double win_h = 768;
+
+struct img *img_new(int w, int h)
+{
+    struct img *img = malloc(sizeof(*img));
+    img->w = w;
+    img->h = h;
+    img->pix = calloc(w * h, sizeof(double));
+    return img;
+}
 
 
-void write_img(struct ctx *ctx, double *img, struct palette *pal, int w, int h, int dst_x, int dst_y)
+void run_script(struct ctx *ctx, bool on)
+{
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd), "%s %d", ctx->script, on);
+    int r = system(cmd);
+    if(r != 0) {
+        fprintf(stderr, "error: script failed\n");
+        exit(1);
+    }
+}
+
+
+void write_img(struct ctx *ctx, struct img *img, struct palette *pal, int dst_x, int dst_y)
 {
     int y, x;
 
-    double vmin = 0xffff;
-    double vmax = 0x0000;
+    double vmin = 1.0e20;
+    double vmax = 0.0;
 
-    for(y=0; y<h; y++) {
-        for(x=0; x<w; x++) {
-            double v = img[y*w+x];
-            if(v != 0) {
-                if(v < vmin) vmin = v;
-                if(v > vmax) vmax = v;
-            }
+    for(int i=0; i<img->w * img->h; i++) {
+        double v = img->pix[i];
+        if(v != 0) {
+            if(v < vmin) vmin = v;
+            if(v > vmax) vmax = v;
         }
     }
 
     if(vmax <= vmin) vmax = vmin + 1;
 
     SDL_Surface* surf = SDL_CreateRGBSurfaceWithFormat(
-            0, w, h, 32, SDL_PIXELFORMAT_BGRA32);
+            0, img->w, img->h, 32, SDL_PIXELFORMAT_BGRA32);
 
     SDL_LockSurface(surf);
     uint32_t *pixels = surf->pixels;
 
-    for(y=h-1; y>=0; y--) {
-        for(x=w-1; x>=0; x--) {
-            int v = pal->count * (img[y*w+x] - vmin) / (vmax - vmin);
+    for(y=img->h-1; y>=0; y--) {
+        for(x=img->w-1; x>=0; x--) {
+            int v = pal->count * (img->pix[y * img->w + x] - vmin) / (vmax - vmin);
             if(v < 0) v = 0;
             if(v > pal->count-1) v = pal->count-1;
-            pixels[y * w + x] = pal->rgba[v];
+            pixels[y * img->w + x] = pal->rgba[v];
         }
     }
 
     SDL_UnlockSurface(surf);
-    SDL_Rect dst = { dst_x + 2, dst_y + 2, win_w * 0.5 - 4, win_h * 0.5 - 4 };
+    SDL_Rect dst = { dst_x + 2, dst_y + 2, ctx->win_w * 0.5 - 4, ctx->win_h * 0.5 - 4 };
     SDL_BlitScaled(surf, NULL, SDL_GetWindowSurface(ctx->win), &dst);
     SDL_FreeSurface(surf);
 
 }
 
 
-void on_frame(struct ctx *ctx, double *img)
+void on_frame(struct ctx *ctx, struct img *img)
 {
-
-    // integrate locked-in signal
     double t = (double)ctx->n / (double)ctx->n_cycle;
     double fact_s = sin(t * 2 * M_PI);
     double fact_c = cos(t * 2 * M_PI);
 
-    for(int i=0; i<ctx->w * ctx->h; i++) {
-        ctx->img_re[i] += img[i] * fact_c;
-        ctx->img_im[i] += img[i] * fact_s;
+    for(int i=0; i<img->w * img->h; i++) {
+        ctx->img_re->pix[i] += img->pix[i] * fact_c;
+        ctx->img_im->pix[i] += img->pix[i] * fact_s;
     }
 
     if(ctx->n == ctx->n_cycle / 2) {
-        system("./toggle 1");
+        run_script(ctx, true);
     }
 
     if(ctx->n == ctx->n_cycle) {
-        system("./toggle 0");
+        run_script(ctx, false);
 
-        printf("HOPS\n");
-        for(int i=0; i<ctx->w * ctx->h; i++) {
-            ctx->img_abs[i] = hypot(ctx->img_im[i], ctx->img_re[i]);
-            ctx->img_pha[i] = atan2(ctx->img_im[i], ctx->img_re[i]);
+        for(int i=0; i<img->w * img->h; i++) {
+            ctx->img_abs->pix[i] = hypot(ctx->img_im->pix[i], ctx->img_re->pix[i]);
+            ctx->img_pha->pix[i] = atan2(ctx->img_im->pix[i], ctx->img_re->pix[i]);
         }
 
         ctx->n = 0 ;
     }
     
-    write_img(ctx, img, &pal_heatmap, ctx->w, ctx->h, 0, 0);
-    write_img(ctx, img, &pal_shadow, ctx->w, ctx->h, win_w * 0.5, 0);
-    write_img(ctx, ctx->img_abs, &pal_overlay, ctx->w, ctx->h, win_w * 0.5, win_h * 0.0);
-    write_img(ctx, ctx->img_abs, &pal_heatmap, ctx->w, ctx->h, win_w * 0.0, win_h * 0.5);
-    write_img(ctx, ctx->img_pha, &pal_phase, ctx->w, ctx->h, win_w * 0.5, win_h * 0.5);
+    write_img(ctx, img, &pal_heatmap, 0, 0);
+    write_img(ctx, img, &pal_shadow, ctx->win_w * 0.5, 0);
+    write_img(ctx, ctx->img_abs, &pal_overlay, ctx->win_w * 0.5, ctx->win_h * 0.0);
+    write_img(ctx, ctx->img_abs, &pal_heatmap, ctx->win_w * 0.0, ctx->win_h * 0.5);
+    write_img(ctx, ctx->img_pha, &pal_phase, ctx->win_w * 0.5, ctx->win_h * 0.5);
     SDL_UpdateWindowSurface(ctx->win);
 }
 
@@ -157,24 +179,28 @@ void init(struct ctx *ctx)
 
     ctx->n_cycle = 500;
     ctx->running = false;
-    ctx->w = 80;
-    ctx->h = 60;
-    ctx->img_raw = calloc(ctx->w * ctx->h, sizeof(double));
-    ctx->img_re = calloc(ctx->w * ctx->h, sizeof(double));
-    ctx->img_im = calloc(ctx->w * ctx->h, sizeof(double));
-    ctx->img_abs = calloc(ctx->w * ctx->h, sizeof(double));
-    ctx->img_pha = calloc(ctx->w * ctx->h, sizeof(double));
+    ctx->flir_w = 80;
+    ctx->flir_h = 60;
+    ctx->img_raw = img_new(ctx->flir_w, ctx->flir_h);
+    ctx->img_re = img_new(ctx->flir_w, ctx->flir_h);
+    ctx->img_im = img_new(ctx->flir_w, ctx->flir_h);
+    ctx->img_abs = img_new(ctx->flir_w, ctx->flir_h);
+    ctx->img_pha = img_new(ctx->flir_w, ctx->flir_h);
+    ctx->script = "./toggle";
 
-    ctx->win = SDL_CreateWindow("flir", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, win_w, win_h, 0);
-    SDL_Surface* surf = SDL_GetWindowSurface(ctx->win);
-    SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0, 0, 0));
-    SDL_UpdateWindowSurface(ctx->win);
-            
+    ctx->win_w = 1024;
+    ctx->win_h = 768;
+
+    ctx->win = SDL_CreateWindow("flir",
+            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+            ctx->win_w, ctx->win_h,
+            SDL_WINDOW_RESIZABLE);
+
     ctx->handle = hid_open(0x1234, 0x5678, NULL);
 }
 
 
-void poll_ev(struct ctx *ctx)
+void poll_sdl(struct ctx *ctx)
 {
     SDL_Event ev;
     while(SDL_PollEvent(&ev)) {
@@ -188,6 +214,13 @@ void poll_ev(struct ctx *ctx)
             }
             if(ev.key.keysym.sym == SDLK_q) {
                 exit(0);
+            }
+        }
+
+        if(ev.type == SDL_WINDOWEVENT) {
+            if(ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                ctx->win_w = ev.window.data1;
+                ctx->win_h = ev.window.data2;
             }
         }
     }
@@ -229,19 +262,19 @@ void poll_flir(struct ctx *ctx)
         // decode one line
 
         uint16_t v = 0;
-        for(int x=0; x<ctx->w; x++) {
+        for(int x=0; x<ctx->flir_w; x++) {
             int32_t w;
             br_golomb(&br, &w, 2);
             v += w;
-            ctx->img_raw[y*ctx->w+x] = v;
+            ctx->img_raw->pix[y*ctx->flir_w+x] = v;
         }
 
         // frame complete
 
-        if(y == ctx->h-1) {
+        if(y == ctx->flir_h-1) {
             if(!ctx->running) {
                 // skip first frame as it may be incomplete
-                memset(ctx->img_raw, 0, sizeof(double) * ctx->w * ctx->h);
+                memset(ctx->img_raw->pix, 0, sizeof(double) * ctx->flir_w * ctx->flir_h);
                 ctx->running = true;
             } else {
                 on_frame(ctx, ctx->img_raw);
@@ -254,13 +287,23 @@ void poll_flir(struct ctx *ctx)
 
 void run(struct ctx *ctx)
 {
-    system("./toggle 0");
+    run_script(ctx, false);
 
     for(;;) {
-        poll_ev(ctx);
+        poll_sdl(ctx);
         poll_console(ctx);
         poll_flir(ctx);
     }
+}
+
+
+void usage(void)
+{
+    fprintf(stderr, "usage: flir [options]\n");
+    fprintf(stderr, "options:\n");
+    fprintf(stderr, "  -h          print this message\n");
+    fprintf(stderr, "  -n <n>      number of frames for integration\n");
+    fprintf(stderr, "  -s <script> path to toggle script\n");
 }
 
 
@@ -268,6 +311,21 @@ int main(int argc, char* argv[])
 {
     struct ctx ctx;
     init(&ctx);
+
+    int c;
+    while((c = getopt(argc, argv, "hn:s:")) != -1) {
+        switch(c) {
+            case 'h':
+                usage();
+                exit(0);
+            case 'n':
+                ctx.n_cycle = atoi(optarg);
+                break;
+            case 's':
+                ctx.script = optarg;
+                break;
+        }
+    }
 
     for(;;) {
         run(&ctx);
