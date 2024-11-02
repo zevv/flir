@@ -16,13 +16,15 @@
 #include "hidapi.h"
 #include "golomb.h"
 
-struct state {
+struct ctx {
+    SDL_Window *win;
     double t;
     int n_cycle;
     int w, h;
     hid_device *handle;
     bool running;
     int n;
+    double *img_raw;
     double *img_re;
     double *img_im;
     double *img_abs;
@@ -62,10 +64,9 @@ struct palette pal_phase = {
 
 static double win_w = 1024;
 static double win_h = 768;
-static SDL_Window *win;
 
 
-void write_img(double *img, struct palette *pal, int w, int h, int dst_x, int dst_y)
+void write_img(struct ctx *ctx, double *img, struct palette *pal, int w, int h, int dst_x, int dst_y)
 {
     int y, x;
 
@@ -101,67 +102,79 @@ void write_img(double *img, struct palette *pal, int w, int h, int dst_x, int ds
 
     SDL_UnlockSurface(surf);
     SDL_Rect dst = { dst_x + 2, dst_y + 2, win_w * 0.5 - 4, win_h * 0.5 - 4 };
-    SDL_BlitScaled(surf, NULL, SDL_GetWindowSurface(win), &dst);
+    SDL_BlitScaled(surf, NULL, SDL_GetWindowSurface(ctx->win), &dst);
     SDL_FreeSurface(surf);
 
 }
 
 
-void on_frame(struct state *state, double *img)
+void on_frame(struct ctx *ctx, double *img)
 {
 
     // integrate locked-in signal
-    double t = (double)state->n / (double)state->n_cycle;
+    double t = (double)ctx->n / (double)ctx->n_cycle;
     double fact_s = sin(t * 2 * M_PI);
     double fact_c = cos(t * 2 * M_PI);
 
-    for(int i=0; i<state->w * state->h; i++) {
-        state->img_re[i] += img[i] * fact_c;
-        state->img_im[i] += img[i] * fact_s;
+    for(int i=0; i<ctx->w * ctx->h; i++) {
+        ctx->img_re[i] += img[i] * fact_c;
+        ctx->img_im[i] += img[i] * fact_s;
     }
 
-    if(state->n == state->n_cycle / 2) {
+    if(ctx->n == ctx->n_cycle / 2) {
         system("./toggle 1");
     }
 
-    if(state->n == state->n_cycle) {
+    if(ctx->n == ctx->n_cycle) {
         system("./toggle 0");
 
         printf("HOPS\n");
-        for(int i=0; i<state->w * state->h; i++) {
-            state->img_abs[i] = hypot(state->img_im[i], state->img_re[i]);
-            state->img_pha[i] = atan2(state->img_im[i], state->img_re[i]);
+        for(int i=0; i<ctx->w * ctx->h; i++) {
+            ctx->img_abs[i] = hypot(ctx->img_im[i], ctx->img_re[i]);
+            ctx->img_pha[i] = atan2(ctx->img_im[i], ctx->img_re[i]);
         }
 
-        state->n = 0 ;
+        ctx->n = 0 ;
     }
     
-    write_img(img, &pal_heatmap, state->w, state->h, 0, 0);
-    write_img(img, &pal_shadow, state->w, state->h, win_w * 0.5, 0);
-    write_img(state->img_abs, &pal_overlay, state->w, state->h, win_w * 0.5, win_h * 0.0);
-    write_img(state->img_abs, &pal_heatmap, state->w, state->h, win_w * 0.0, win_h * 0.5);
-    write_img(state->img_pha, &pal_phase, state->w, state->h, win_w * 0.5, win_h * 0.5);
-    SDL_UpdateWindowSurface( win );
+    write_img(ctx, img, &pal_heatmap, ctx->w, ctx->h, 0, 0);
+    write_img(ctx, img, &pal_shadow, ctx->w, ctx->h, win_w * 0.5, 0);
+    write_img(ctx, ctx->img_abs, &pal_overlay, ctx->w, ctx->h, win_w * 0.5, win_h * 0.0);
+    write_img(ctx, ctx->img_abs, &pal_heatmap, ctx->w, ctx->h, win_w * 0.0, win_h * 0.5);
+    write_img(ctx, ctx->img_pha, &pal_phase, ctx->w, ctx->h, win_w * 0.5, win_h * 0.5);
+    SDL_UpdateWindowSurface(ctx->win);
 }
 
 
-void init(struct state *state)
+void init(struct ctx *ctx)
 {
-    memset(state, 0, sizeof(*state));
+    memset(ctx, 0, sizeof(*ctx));
 
-    state->n_cycle = 100;
-    state->running = false;
-    state->w = 80;
-    state->h = 60;
-    state->img_re = calloc(state->w * state->h, sizeof(double));
-    state->img_im = calloc(state->w * state->h, sizeof(double));
-    state->img_abs = calloc(state->w * state->h, sizeof(double));
-    state->img_pha = calloc(state->w * state->h, sizeof(double));
+    for(size_t i=0; i<256; i++) {
+        pal_overlay.rgba[i] = (i << 24) | 0x00ff0000;
+        pal_shadow.rgba[i] = 0xff000000 | ((i/2) << 16) | ((i/2) << 8) | (i/2);
+    }
+
+    ctx->n_cycle = 500;
+    ctx->running = false;
+    ctx->w = 80;
+    ctx->h = 60;
+    ctx->img_raw = calloc(ctx->w * ctx->h, sizeof(double));
+    ctx->img_re = calloc(ctx->w * ctx->h, sizeof(double));
+    ctx->img_im = calloc(ctx->w * ctx->h, sizeof(double));
+    ctx->img_abs = calloc(ctx->w * ctx->h, sizeof(double));
+    ctx->img_pha = calloc(ctx->w * ctx->h, sizeof(double));
+
+    ctx->win = SDL_CreateWindow("flir", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, win_w, win_h, 0);
+    SDL_Surface* surf = SDL_GetWindowSurface(ctx->win);
+    SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0, 0, 0));
+    SDL_UpdateWindowSurface(ctx->win);
+            
+    ctx->handle = hid_open(0x1234, 0x5678, NULL);
 }
 
 
-
-void poll_ev(struct state *state)
+void poll_ev(struct ctx *ctx)
 {
     SDL_Event ev;
     while(SDL_PollEvent(&ev)) {
@@ -181,112 +194,83 @@ void poll_ev(struct state *state)
 }
 
 
-void run(struct state *state)
+void poll_console(struct ctx *ctx)
 {
-    int res;
+    struct pollfd pfd = { .fd = 0, .events = POLLIN };
+    int r = poll(&pfd, 1, 0);
+    if(r == 1) {
+        uint8_t cmd[1];
+        r = read(0, cmd, sizeof(cmd));
+        hid_write(ctx->handle, cmd, r);
+    }
+}
+
+
+void poll_flir(struct ctx *ctx)
+{
     uint8_t buf[65];
 
-    double img[60][80] = { 0 };
+    int res = hid_read(ctx->handle, buf, 64);
+    if (res < 0) {
+        return;
+    }
 
-    system("./toggle 0");
+    if(buf[0] == 0xff) {
 
-    for(;;) {
+        fprintf(stderr, "%s", buf+1);
 
-        poll_ev(state);
-
-        struct pollfd pfd = { .fd = 0, .events = POLLIN };
-        int r = poll(&pfd, 1, 0);
-
-        if(r == 1) {
-            uint8_t cmd[1];
-            r = read(0, cmd, sizeof(cmd));
-            hid_write(state->handle, cmd, r);
-            fprintf(stderr, "ww");
-        }
-
-
-        buf[0] = 1;
-
-        res = hid_read(state->handle, buf, 64);
-        if (res < 0) {
-            break;
-        }
-
-        if(buf[0] == 0xff) {
-            fprintf(stderr, "%s", buf+1);
-            continue;
-        }
+    } else {
 
         struct bitreader br;
         br_init(&br, buf+1, sizeof(buf)-1);
 
-        int x = 0;
         int y = buf[0];
-        uint16_t v = 0;
 
         // decode one line
 
-        for(x=0; x<state->w; x++) {
+        uint16_t v = 0;
+        for(int x=0; x<ctx->w; x++) {
             int32_t w;
             br_golomb(&br, &w, 2);
             v += w;
-            img[y][x] = v;
+            ctx->img_raw[y*ctx->w+x] = v;
         }
 
         // frame complete
 
-        if(y == state->h-1) {
-
-            if(!state->running) {
-                memset(img, 0, sizeof(img));
-                state->running = true;
-                goto skip;
+        if(y == ctx->h-1) {
+            if(!ctx->running) {
+                // skip first frame as it may be incomplete
+                memset(ctx->img_raw, 0, sizeof(double) * ctx->w * ctx->h);
+                ctx->running = true;
+            } else {
+                on_frame(ctx, ctx->img_raw);
             }
-
-            on_frame(state, &img[0][0]);
-
-skip:
-            state->n ++;
-
+            ctx->n ++;
         }
     }
 }
 
 
+void run(struct ctx *ctx)
+{
+    system("./toggle 0");
 
+    for(;;) {
+        poll_ev(ctx);
+        poll_console(ctx);
+        poll_flir(ctx);
+    }
+}
 
 
 int main(int argc, char* argv[])
 {
-
-    win = SDL_CreateWindow("flir", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, win_w, win_h, 0);
-    SDL_Surface* surf = SDL_GetWindowSurface( win );
-    SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 0, 0, 0));
-    SDL_UpdateWindowSurface( win );
-
-    for(size_t i=0; i<256; i++) {
-        pal_overlay.rgba[i] = (i << 24) | 0x00ff0000;
-        pal_shadow.rgba[i] = 0xff000000 | ((i/2) << 16) | ((i/2) << 8) | (i/2);
-    }
-
-    struct state state;
-    init(&state);
+    struct ctx ctx;
+    init(&ctx);
 
     for(;;) {
-
-        for(;;) {
-            state.handle = hid_open(0x1234, 0x5678, NULL);
-            if(state.handle) {
-                break;
-            } else {
-                printf("hid_open failed\n");
-                usleep(100 * 1000);
-            }
-        }
-
-        run(&state);
-
-        hid_close(state.handle);
+        run(&ctx);
     }
 
     return 0;
