@@ -24,6 +24,7 @@ struct img {
 
 struct ctx {
     SDL_Window *win;
+    SDL_Renderer *rend;
     int win_w, win_h;
     double t;
     int n_cycle;
@@ -110,12 +111,13 @@ void write_img(struct ctx *ctx, struct img *img, struct palette *pal, int dst_x,
 
     if(vmax <= vmin) vmax = vmin + 1;
 
-    SDL_Surface* surf = SDL_CreateRGBSurfaceWithFormat(
-            0, img->w, img->h, 32, SDL_PIXELFORMAT_BGRA32);
+    SDL_Texture *tex = SDL_CreateTexture( ctx->rend, 
+            SDL_PIXELFORMAT_ARGB8888, 
+            SDL_TEXTUREACCESS_STREAMING, img->w, img->h);
 
-    SDL_LockSurface(surf);
-    uint32_t *pixels = surf->pixels;
-
+    uint32_t *pixels;
+    int pitch;
+    SDL_LockTexture(tex, NULL, (void **)&pixels, &pitch);
     for(y=img->h-1; y>=0; y--) {
         for(x=img->w-1; x>=0; x--) {
             int v = pal->count * (img->pix[y * img->w + x] - vmin) / (vmax - vmin);
@@ -124,11 +126,12 @@ void write_img(struct ctx *ctx, struct img *img, struct palette *pal, int dst_x,
             pixels[y * img->w + x] = pal->rgba[v];
         }
     }
-
-    SDL_UnlockSurface(surf);
+    SDL_UnlockTexture(tex);
+    
     SDL_Rect dst = { dst_x + 2, dst_y + 2, ctx->win_w * 0.5 - 4, ctx->win_h * 0.5 - 4 };
-    SDL_BlitScaled(surf, NULL, SDL_GetWindowSurface(ctx->win), &dst);
-    SDL_FreeSurface(surf);
+    SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+    SDL_RenderCopy(ctx->rend, tex, NULL, &dst);
+    SDL_DestroyTexture(tex);
 
 }
 
@@ -158,12 +161,15 @@ void on_frame(struct ctx *ctx, struct img *img)
 
         ctx->n = 0 ;
     }
-    
+   
     write_img(ctx, img, &pal_heatmap, 0, 0);
     write_img(ctx, img, &pal_shadow, ctx->win_w * 0.5, 0);
     write_img(ctx, ctx->img_abs, &pal_overlay, ctx->win_w * 0.5, ctx->win_h * 0.0);
     write_img(ctx, ctx->img_abs, &pal_heatmap, ctx->win_w * 0.0, ctx->win_h * 0.5);
     write_img(ctx, ctx->img_pha, &pal_phase, ctx->win_w * 0.5, ctx->win_h * 0.5);
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    SDL_RenderPresent(ctx->rend);
     SDL_UpdateWindowSurface(ctx->win);
 }
 
@@ -195,6 +201,8 @@ void init(struct ctx *ctx)
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
             ctx->win_w, ctx->win_h,
             SDL_WINDOW_RESIZABLE);
+
+    ctx->rend = SDL_CreateRenderer(ctx->win, -1, SDL_RENDERER_ACCELERATED);
 
     ctx->handle = hid_open(0x1234, 0x5678, NULL);
 }
