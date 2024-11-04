@@ -2,8 +2,9 @@
 BIN   	= flir
 SRC 	= flir.c golomb.c
 
-CFLAGS  += -Wall -O0 -g `pkg-config --cflags sdl2 hidapi-libusb`
-LDFLAGS += -g `pkg-config --libs sdl2 hidapi-libusb` -lm
+PKG := sdl2 hidapi-libusb SDL2_ttf
+CFLAGS  += -Wall -O0 -g `pkg-config --cflags $(PKG)`
+LDFLAGS += -g `pkg-config --libs $(PKG)` -lm
 
 CFLAGS += -fsanitize=address
 LDFLAGS += -fsanitize=address
